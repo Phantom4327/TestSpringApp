@@ -1,0 +1,40 @@
+# k8s-deployment.yaml
+
+# --- Deployment ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-test-app-deployment
+spec:
+  replicas: 2 # 运行两个 Pod 实例
+  selector:
+    matchLabels:
+      app: k8s-test-app
+  template:
+    metadata:
+      labels:
+        app: k8s-test-app
+    spec:
+      containers:
+        - name: k8s-test-app-container
+          # 这里的镜像名将在 Jenkins Pipeline 中被动态替换
+          image: Phantom4327/k8s-test-app:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 10456 # 必须和你的 Spring Boot 应用端口一致
+
+---
+# --- Service ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8s-test-app-service
+spec:
+  type: NodePort # 使用 NodePort 类型暴露服务，便于测试
+  selector:
+    app: k8s-test-app # 将流量转发给带有这个标签的 Pod
+  ports:
+    - protocol: TCP
+      port: 80 # Service 监听的端口
+      targetPort: 10456 # Pod 容器实际的端口
+      nodePort: 30090 # 指定一个固定的 NodePort 端口
